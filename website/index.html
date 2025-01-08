@@ -35,6 +35,13 @@
   * s₂ s₂ s₂ s₂</textarea>
     </label>
     <div style="display: flex; justify-content: space-between;">
+        <select id="check-dfa-test" aria-label="Select what to test for...">
+            <option value="valid" selected>Validity</option>
+            <option value="assignment-2-2-1">Assignment 2, question 2.1</option>
+            <option value="assignment-2-2-2">Assignment 2, question 2.2</option>
+            <option value="assignment-2-2-3">Assignment 2, question 2.3</option>
+            <option value="assignment-2-3">Assignment 2, question 3</option>
+        </select>
         <button id="check-dfa-btn" aria-busy="true" class="check-button">Loading...</button>
         <button onclick="document.getElementById('check-dfa-upld').click()" class="upload-button" aria-busy="true">Loading...</button>
         <input type="file" id="check-dfa-upld" style="display: none;"/>
@@ -53,6 +60,10 @@
 * s₄ {}   {s₄} {}</textarea>
     </label>
     <div style="display: flex; justify-content: space-between;">
+        <select id="check-nfa-test" aria-label="Select what to test for...">
+            <option value="valid" selected>Validity</option>
+            <option value="assignment-2-3">Assignment 2, question 3</option>
+        </select>
         <button id="check-nfa-btn" aria-busy="true" class="check-button">Loading...</button>
         <button onclick="document.getElementById('check-nfa-upld').click()" class="upload-button" aria-busy="true">Loading...</button>
         <input type="file" id="check-nfa-upld" style="display: none;"/>
@@ -65,6 +76,10 @@
         <input type="text" id="check-regex" class="mono" value="(ab)+(c|d)*bb+"/>
     </label>
     <div style="display: flex; justify-content: space-between;">
+        <select id="check-regex-test" aria-label="Select what to test for...">
+            <option value="valid" selected>Validity</option>
+            <option value="assignment-3-2">Assignment 3, question 2</option>
+        </select>
         <button id="check-regex-btn" aria-busy="true" class="check-button">Loading...</button>
         <button onclick="document.getElementById('check-regex-upld').click()" class="upload-button" aria-busy="true">Loading...</button>
         <input type="file" id="check-regex-upld" style="display: none;"/>
@@ -112,49 +127,32 @@
             reader.onload = (e) => { document.getElementById(textarea).value = e.target.result };
         }
 
-        function checkDfa() {
+        function report(id, valid, output) {
+            document.getElementById(id).setAttribute("aria-invalid", !valid);
+            document.getElementById(`${id}-out`).innerText = output;
+            document.getElementById(`${id}-result`).innerText = valid ? "Valid!" : "Invalid!";
+            document.getElementById(`${id}-result`).style.color = valid ? green : red;
+        }
+
+        function check(id, fn) {
             try {
-                check_dfa(document.getElementById("check-dfa").value);
-                document.getElementById("check-dfa").setAttribute("aria-invalid", "false");
-                document.getElementById("check-dfa-out").innerText = "";
-                document.getElementById("check-dfa-result").innerText = "Valid!";
-                document.getElementById("check-dfa-result").style.color = green;
+                fn(document.getElementById(`${id}-test`).value, document.getElementById(id).value);
+                report(id, true, "");
             } catch (e) {
-                document.getElementById("check-dfa").setAttribute("aria-invalid", "true");
-                document.getElementById("check-dfa-out").innerText = e;
-                document.getElementById("check-dfa-result").innerText = "Invalid!";
-                document.getElementById("check-dfa-result").style.color = red;
+                report(id, false, e);
             }
+        }
+
+        function checkDfa() {
+            check("check-dfa", check_dfa);
         }
 
         function checkNfa() {
-            try {
-                check_nfa(document.getElementById("check-nfa").value);
-                document.getElementById("check-nfa").setAttribute("aria-invalid", "false");
-                document.getElementById("check-nfa-out").innerText = "";
-                document.getElementById("check-nfa-result").innerText = "Valid!";
-                document.getElementById("check-nfa-result").style.color = green;
-            } catch (e) {
-                document.getElementById("check-nfa").setAttribute("aria-invalid", "true");
-                document.getElementById("check-nfa-out").innerText = e;
-                document.getElementById("check-nfa-result").innerText = "Invalid!";
-                document.getElementById("check-nfa-result").style.color = red;
-            }
+            check("check-nfa", check_nfa);
         }
 
         function checkRegex() {
-            try {
-                check_regex(document.getElementById("check-regex").value);
-                document.getElementById("check-regex").setAttribute("aria-invalid", "false");
-                document.getElementById("check-regex-out").innerText = "";
-                document.getElementById("check-regex-result").innerText = "Valid!";
-                document.getElementById("check-regex-result").style.color = green;
-            } catch (e) {
-                document.getElementById("check-regex").setAttribute("aria-invalid", "true");
-                document.getElementById("check-regex-out").innerText = e;
-                document.getElementById("check-regex-result").innerText = "Invalid!";
-                document.getElementById("check-regex-result").style.color = red;
-            }
+            check("check-regex", check_regex);
         }
 
         run();
