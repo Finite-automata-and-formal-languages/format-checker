@@ -7,5 +7,5 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-dandy = "0.1.7"
+dandy = { git = "https://github.com/ncfavier/dandy", branch = "parse-grammar" }
 wasm-bindgen = "0.2.90"
