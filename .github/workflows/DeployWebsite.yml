@@ -51,8 +51,8 @@ jobs:
           b64-decode: false
       - name: Move assignment solutions
         env:
-          TEST_SECRET_FILE: ${{ steps.test-secret.outputs.file }}
-        run: mv $TEST_SECRET_FILE bindings/assignments.yaml
+          ASSIGNMENT_SOLUTIONS_FILE: ${{ steps.assignment-solutions.outputs.file }}
+        run: mv $ASSIGNMENT_SOLUTIONS_FILE bindings/assignments.yaml
       - name: Build website
         working-directory: bindings
         run: |
