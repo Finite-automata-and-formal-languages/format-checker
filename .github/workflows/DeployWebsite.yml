@@ -34,8 +34,8 @@ jobs:
       - name: Install toolchain (minimal, stable, wasm32-unknown-unknown + wasm32-wasi)
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: nightly
-          targets: wasm32-unknown-unknown, wasm32-wasi
+          toolchain: stable
+          targets: wasm32-unknown-unknown #, wasm32-wasi
       - name: Install wasm-opt
         run: |
           npm i wasm-opt -g
