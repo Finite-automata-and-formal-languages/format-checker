@@ -2,9 +2,13 @@
 name: Deploy main website
 
 on:
-  # Runs on pushes targeting the default branch
+  # TODO: disable before merging!
   push:
-    branches: [ "main" ]
+    branches: [ "equivalence-test" ]
+  # Runs on pushes targeting the default branch
+  # push:
+  #   branches: [ "main" ]
+
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -30,6 +34,7 @@ jobs:
       - name: Install toolchain (minimal, stable, wasm32-unknown-unknown + wasm32-wasi)
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: nightly
           targets: wasm32-unknown-unknown, wasm32-wasi
       - name: Install wasm-opt
         run: |
@@ -38,6 +43,16 @@ jobs:
           ln -s $(which wasm-opt) $(dirname $(which wasm-opt))/bin/wasm-opt
       - name: Install wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
+      - name: Copy assignment solutions to file
+        uses: lukasa1993/secret-file-action@v1.0.3
+        id: assignment-solutions
+        with:
+          secret: ${{ secrets.ASSIGNMENT_SOLUTIONS }}
+          b64-decode: false
+      - name: Move assignment solutions
+        env:
+          TEST_SECRET_FILE: ${{ steps.test-secret.outputs.file }}
+        run: mv $TEST_SECRET_FILE bindings/assignments.yaml
       - name: Build website
         working-directory: bindings
         run: |
