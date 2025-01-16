@@ -1,96 +1,127 @@
-use dandy::dfa::Dfa;
 use dandy::dfa::parse::DfaParseError;
-use dandy::nfa::Nfa;
-use dandy::nfa::parse::NfaParseError;
-use dandy::grammar::Grammar;
+use dandy::dfa::Dfa;
 use dandy::grammar::parse::GrammarParseError;
+use dandy::grammar::Grammar;
+use dandy::nfa::parse::NfaParseError;
+use dandy::nfa::Nfa;
+use dandy::parser::{dfa, grammar, nfa, regex};
 use dandy::regex::Regex;
-use dandy::parser::{dfa, nfa, regex, grammar};
+use std::collections::HashMap;
+use std::sync::LazyLock;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-trait AcceptsGraphemes {
-    fn accepts_graphemes(&self, word: &str) -> bool;
+/// Expected format is
+/// ```yaml
+/// assignment-3-2: |
+///   the code for
+///   the automata
+/// ...
+/// ```
+/// The contents of the file are supposed to be stored as a GitHub secret,
+/// and are written to this file at deployment.
+static SOLUTION_STR: &str = include_str!("../assignments.yaml");
 
-    fn should_accept(&self, word: &str) -> Result<(), String> {
-        if !self.accepts_graphemes(word) {
-            return Err(format!("The word `{word}` should be accepted, but it is rejected."))
-        }
-        Ok(())
-    }
-
-    fn should_reject(&self, word: &str) -> Result<(), String> {
-        if self.accepts_graphemes(word) {
-            return Err(format!("The word `{word}` should be rejected, but it is accepted."))
-        }
-        Ok(())
-    }
-}
-
-impl AcceptsGraphemes for Dfa {
-    fn accepts_graphemes(&self, word: &str) -> bool {
-        self.accepts_graphemes(word)
-    }
-}
-
-impl AcceptsGraphemes for Nfa {
-    fn accepts_graphemes(&self, word: &str) -> bool {
-        self.accepts_graphemes(word)
-    }
-}
-
-impl AcceptsGraphemes for Regex {
-    fn accepts_graphemes(&self, word: &str) -> bool {
-        self.clone().to_nfa().accepts_graphemes(word)
-    }
-}
+static SOLUTION: LazyLock<HashMap<String, String>> =
+    LazyLock::new(|| serde_yaml::from_str(&SOLUTION_STR).unwrap());
 
 #[wasm_bindgen]
 pub fn check_dfa(test: &str, input: &str) -> Result<(), String> {
-    let _dfa: Dfa = dfa(input)
+    let proposed_dfa: Dfa = dfa(input)
         .map_err(|e| format!("Error parsing DFA: {e}"))?
         .try_into()
         .map_err(|e: DfaParseError| e.to_string())?;
-    match test {
-        "valid" => (),
-        _ => return Err(format!("test {test} not implemented"))
+
+    if test == "valid" {
+        return Ok(());
     }
-    Ok(())
+
+    let solution_dfa_src = SOLUTION
+        .get(test)
+        .ok_or(format!("No solution for {}", test))?;
+
+    let solution_dfa: Dfa = dfa(solution_dfa_src)
+        .map_err(|e| format!("Error parsing solution DFA: {e}"))?
+        .try_into()
+        .map_err(|e: DfaParseError| e.to_string())?;
+
+    if let Some(sep) = solution_dfa.separable_from(&proposed_dfa) {
+        let e = match sep {
+            None => "The provided NFA has the wrong alphabet!".to_string(),
+            Some(w) => format!(
+                "The solution and the provided NFA disagree on the word {}",
+                w
+            ),
+        };
+        Err(e)
+    } else {
+        Ok(())
+    }
 }
 
 #[wasm_bindgen]
 pub fn check_nfa(test: &str, input: &str) -> Result<(), String> {
-    let nfa: Nfa = nfa(input)
+    let proposed_nfa: Nfa = nfa(input)
         .map_err(|e| format!("Error parsing NFA: {e}"))?
         .try_into()
         .map_err(|e: NfaParseError| e.to_string())?;
-    match test {
-        "valid" => (),
-        "assignment-2-3-1" => {
-            nfa.should_accept("abaab")?;
-            nfa.should_accept("babbabb")?;
-            nfa.should_reject("ababab")?;
-        }
-        _ => return Err(format!("test {test} not implemented"))
+
+    if test == "valid" {
+        return Ok(());
     }
-    Ok(())
+
+    let solution_nfa_src = SOLUTION
+        .get(test)
+        .ok_or(format!("No solution for {}", test))?;
+
+    let solution_nfa: Nfa = nfa(solution_nfa_src)
+        .map_err(|e| format!("Error parsing solution NFA: {e}"))?
+        .try_into()
+        .map_err(|e: NfaParseError| e.to_string())?;
+
+    if let Some(sep) = solution_nfa.separable_from(&proposed_nfa) {
+        let e = match sep {
+            None => "The provided NFA has the wrong alphabet!".to_string(),
+            Some(w) => format!(
+                "The solution and the provided NFA disagree on the word {}",
+                w
+            ),
+        };
+        Err(e)
+    } else {
+        Ok(())
+    }
 }
 
 #[wasm_bindgen]
 pub fn check_regex(test: &str, input: &str) -> Result<(), String> {
-    let regex: Regex = regex(input)
-        .map_err(|e| format!("Error parsing regex: {e}"))?;
-    let nfa = regex.to_nfa();
-    match test {
-        "valid" => (),
-        "assignment-3-2" => {
-            nfa.should_accept("101")?;
-            nfa.should_accept("10101")?;
-            nfa.should_reject("11")?;
-            nfa.should_reject("1001")?;
-        }
-        _ => return Err(format!("test {test} not implemented"))
+    let proposed_regex: Regex = regex(input).map_err(|e| format!("Error parsing regex: {e}"))?;
+
+    if test == "valid" {
+        return Ok(());
     }
-    Ok(())
+
+    let solution_regex_src = SOLUTION
+        .get(test)
+        .ok_or(format!("No solution for {}", test))?;
+
+    let solution_regex: Regex =
+        regex(solution_regex_src).map_err(|e| format!("Error parsing solution Regex: {e}"))?;
+
+    if let Some(sep) = solution_regex
+        .to_nfa()
+        .separable_from(&proposed_regex.to_nfa())
+    {
+        let e = match sep {
+            None => "The provided Regex has the wrong alphabet!".to_string(),
+            Some(w) => format!(
+                "The solution and the provided Regex disagree on the word {}",
+                w
+            ),
+        };
+        Err(e)
+    } else {
+        Ok(())
+    }
 }
 
 #[wasm_bindgen]
@@ -101,7 +132,7 @@ pub fn check_grammar(test: &str, input: &str) -> Result<(), String> {
         .map_err(|e: GrammarParseError| e.to_string())?;
     match test {
         "valid" => (),
-        _ => return Err(format!("test {test} not implemented"))
+        _ => return Err(format!("test {test} not implemented")),
     }
     Ok(())
 }

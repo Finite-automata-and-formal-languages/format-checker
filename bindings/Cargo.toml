@@ -9,3 +9,5 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 dandy = { git = "https://github.com/Finite-automata-and-formal-languages/dandy" }
 wasm-bindgen = "0.2.90"
+serde = "1"
+serde_yaml = "0.9"
