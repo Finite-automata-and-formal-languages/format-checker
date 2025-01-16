@@ -46,9 +46,9 @@ pub fn check_dfa(test: &str, input: &str) -> Result<(), String> {
 
     if let Some(sep) = solution_dfa.separable_from(&proposed_dfa) {
         let e = match sep {
-            None => "The provided NFA has the wrong alphabet!".to_string(),
+            None => "The provided DFA has the wrong alphabet!".to_string(),
             Some(w) => format!(
-                "The solution and the provided NFA disagree on the word {}",
+                "The solution and the provided DFA disagree on the word {}",
                 w
             ),
         };
