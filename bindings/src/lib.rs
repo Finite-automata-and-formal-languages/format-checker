@@ -73,10 +73,14 @@ pub fn check_nfa(test: &str, input: &str) -> Result<(), String> {
         .get(test)
         .ok_or(format!("No solution for {}", test))?;
 
-    let solution_nfa: Nfa = nfa(solution_nfa_src)
-        .map_err(|e| format!("Error parsing solution NFA: {e}"))?
-        .try_into()
-        .map_err(|e: NfaParseError| e.to_string())?;
+    let solution_nfa: Nfa = if solution_nfa_src.contains('\n') {
+        nfa(solution_nfa_src)
+            .map_err(|e| format!("Error parsing solution NFA: {e}"))?
+            .try_into()
+            .map_err(|e: NfaParseError| e.to_string())?
+    } else {
+        regex(solution_nfa_src).map_err(|e| format!("Error parsing solution Regex: {e}"))?.to_nfa()
+    };
 
     if let Some(sep) = solution_nfa.separable_from(&proposed_nfa) {
         let e = match sep {
@@ -104,11 +108,16 @@ pub fn check_regex(test: &str, input: &str) -> Result<(), String> {
         .get(test)
         .ok_or(format!("No solution for {}", test))?;
 
-    let solution_regex: Regex =
-        regex(solution_regex_src).map_err(|e| format!("Error parsing solution Regex: {e}"))?;
+    let solution_nfa: Nfa = if solution_regex_src.contains('\n') {
+        nfa(solution_regex_src)
+            .map_err(|e| format!("Error parsing solution NFA: {e}"))?
+            .try_into()
+            .map_err(|e: NfaParseError| e.to_string())?
+    } else {
+        regex(solution_regex_src).map_err(|e| format!("Error parsing solution Regex: {e}"))?.to_nfa()
+    };
 
-    if let Some(sep) = solution_regex
-        .to_nfa()
+    if let Some(sep) = solution_nfa
         .separable_from(&proposed_regex.to_nfa())
     {
         let e = match sep {
