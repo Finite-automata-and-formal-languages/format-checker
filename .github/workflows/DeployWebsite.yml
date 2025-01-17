@@ -6,6 +6,7 @@ on:
   push:
     branches: [ "main" ]
 
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -27,10 +28,11 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup Pages
         uses: actions/configure-pages@v4
-      - name: Install toolchain (minimal, stable, wasm32-unknown-unknown + wasm32-wasi)
+      - name: Install toolchain (minimal, stable, wasm32-unknown-unknown)
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: wasm32-unknown-unknown, wasm32-wasi
+          toolchain: stable
+          targets: wasm32-unknown-unknown
       - name: Install wasm-opt
         run: |
           npm i wasm-opt -g
@@ -38,6 +40,16 @@ jobs:
           ln -s $(which wasm-opt) $(dirname $(which wasm-opt))/bin/wasm-opt
       - name: Install wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
+      - name: Copy assignment solutions to file
+        uses: lukasa1993/secret-file-action@v1.0.3
+        id: assignment-solutions
+        with:
+          secret: ${{ secrets.ASSIGNMENT_SOLUTIONS }}
+          b64-decode: false
+      - name: Move assignment solutions
+        env:
+          ASSIGNMENT_SOLUTIONS_FILE: ${{ steps.assignment-solutions.outputs.file }}
+        run: mv $ASSIGNMENT_SOLUTIONS_FILE bindings/assignments.yaml
       - name: Build website
         working-directory: bindings
         run: |
