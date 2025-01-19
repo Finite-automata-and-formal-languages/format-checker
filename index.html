@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <title>Finite Automata and Formal Languages</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .mono {
+            font-family: monospace;
+            font-size: 80%;
+        }
+
+        button {
+            max-width: 180px;
+        }
+    </style>
+    <link rel="stylesheet" href="pico.classless.min.css">
+</head>
+
+<body>
+    <main style="max-width: 800px">
+        <hgroup>
+            <h1>Finite Automata and Formal Languages</h1>
+            <p>
+                On this page, you can validate your input against the text formats used in the course
+                and test your answers to some of the questions.
+            </p>
+            <p>
+                Note that passing these tests doesn't guarantee that your answer is correct;
+                you should still read the assignment carefully.
+                For example, this tool does not check for minimality.
+            </p>
+        </hgroup>
+
+        <h3>Validate your DFA here:</h3>
+        <label>
+            <textarea id="check-dfa" class="mono" rows="8">
+       a  b  c
+→ * s₀ s₁ s₀ s₂
+    s₁ s₂ s₁ s₁
+  * s₂ s₂ s₂ s₂</textarea>
+        </label>
+        <div style="display: flex; gap: 20px; justify-content: space-between;">
+            <select id="check-dfa-test" aria-label="Select what to test for...">
+                <option value="valid" selected>Validity</option>
+                <option value="assignment-2-2-1">Assignment 2, question 2.1</option>
+                <option value="assignment-2-2-2">Assignment 2, question 2.2</option>
+                <option value="assignment-2-2-3">Assignment 2, question 2.3</option>
+                <option value="assignment-2-3-2">Assignment 2, question 3.2</option>
+                <option value="assignment-3-3">Assignment 3, question 3</option>
+                <option value="assignment-4-4">Assignment 4, question 4</option>
+            </select>
+            <button id="check-dfa-btn" aria-busy="true" class="check-button">Loading...</button>
+            <button onclick="document.getElementById('check-dfa-upld').click()" class="upload-button"
+                aria-busy="true">Loading...</button>
+            <input type="file" id="check-dfa-upld" style="display: none;" />
+        </div>
+        <span id="check-dfa-result"></span>
+        <p id="check-dfa-out" class="mono"></p>
+
+        <h3>Validate your NFA or ε-NFA here:</h3>
+        <label>
+            <textarea id="check-nfa" class="mono" rows="8">
+     a    b    c
+→ s₀ {s₀} {s₁} {s₀ s₂}
+  s₁ {}   {s₃} {s₂}
+  s₂ {}   {s₁} {s₄}
+  s₃ {s₄} {}   {s₃}
+* s₄ {}   {s₄} {}</textarea>
+        </label>
+        <div style="display: flex; gap: 20px; justify-content: space-between;">
+            <select id="check-nfa-test" aria-label="Select what to test for...">
+                <option value="valid" selected>Validity</option>
+                <option value="assignment-2-3-1">Assignment 2, question 3.1</option>
+                <option value="assignment-3-1">Assignment 3, question 1</option>
+            </select>
+            <button id="check-nfa-btn" aria-busy="true" class="check-button">Loading...</button>
+            <button onclick="document.getElementById('check-nfa-upld').click()" class="upload-button"
+                aria-busy="true">Loading...</button>
+            <input type="file" id="check-nfa-upld" style="display: none;" />
+        </div>
+        <span id="check-nfa-result"></span>
+        <p id="check-nfa-out" class="mono"></p>
+
+        <h3>Validate your regular expression here:</h3>
+        <label>
+            <input type="text" id="check-regex" class="mono" value="(ab)+(c|d)*bb+" />
+        </label>
+        <div style="display: flex; gap: 20px; justify-content: space-between;">
+            <select id="check-regex-test" aria-label="Select what to test for...">
+                <option value="valid" selected>Validity</option>
+                <option value="assignment-3-2">Assignment 3, question 2</option>
+                <option value="assignment-3-4">Assignment 3, question 4</option>
+            </select>
+            <button id="check-regex-btn" aria-busy="true" class="check-button">Loading...</button>
+            <button onclick="document.getElementById('check-regex-upld').click()" class="upload-button"
+                aria-busy="true">Loading...</button>
+            <input type="file" id="check-regex-upld" style="display: none;" />
+        </div>
+        <span id="check-regex-result"></span>
+        <p id="check-regex-out" class="mono"></p>
+
+        <h3>Validate your context-free grammar here:</h3>
+        <label>
+            <textarea id="check-grammar" class="mono" rows="8">
+Nonterminals: E O N
+Terminals: + - 1
+Start: E
+E → E O E | N
+O → + | - |
+N → 1 | 1 N</textarea>
+        </label>
+        <div style="display: flex; gap: 20px; justify-content: space-between;">
+            <select id="check-grammar-test" aria-label="Select what to test for...">
+                <option value="valid" selected>Validity</option>
+            </select>
+            <button id="check-grammar-btn" aria-busy="true" class="check-button">Loading...</button>
+            <button onclick="document.getElementById('check-grammar-upld').click()" class="upload-button"
+                aria-busy="true">Loading...</button>
+            <input type="file" id="check-grammar-upld" style="display: none;" />
+        </div>
+        <span id="check-grammar-result"></span>
+        <p id="check-grammar-out" class="mono"></p>
+
+        <script type="module">
+            // noinspection JSFileReferences
+            import init, { check_dfa, check_nfa, check_regex, check_grammar } from "./web_bindings/bindings.js"
+
+            const green = "#388e3c";
+            const red = "#b71c1c";
+
+            let filenames = {};
+
+            async function run() {
+                await init();
+                document.querySelectorAll(".check-button").forEach(button => {
+                    button.innerText = "Check!";
+                    button.removeAttribute("aria-busy");
+                });
+
+                document.querySelectorAll(".upload-button").forEach(button => {
+                    button.innerText = "Upload File";
+                    button.removeAttribute("aria-busy");
+                });
+
+                document.getElementById("check-dfa-btn").onclick = checkDfa;
+                document.getElementById("check-nfa-btn").onclick = checkNfa;
+                document.getElementById("check-regex-btn").onclick = checkRegex;
+                document.getElementById("check-regex").addEventListener("keypress", event => {
+                    if (event.key === "Enter") {
+                        checkRegex()
+                    }
+                });
+                document.getElementById("check-grammar-btn").onclick = checkGrammar;
+
+                for (const id of ["check-dfa", "check-nfa", "check-regex", "check-grammar"]) {
+                    document.getElementById(`${id}-upld`).onchange = () => uploadFile(`${id}-upld`, id);
+                    document.getElementById(id).onchange = () => delete filenames[id];
+                }
+            }
+
+            function uploadFile(input, textarea) {
+                const file = document.getElementById(input).files[0];
+                const reader = new FileReader();
+                reader.readAsText(file, "UTF-8")
+                reader.onload = (e) => { document.getElementById(textarea).value = e.target.result };
+                filenames[textarea] = file.name;
+            }
+
+            function report(id, valid, output) {
+                document.getElementById(id).setAttribute("aria-invalid", !valid);
+                document.getElementById(`${id}-out`).innerText = output;
+                document.getElementById(`${id}-result`).innerText = valid ? "Valid!" : "Invalid!";
+                document.getElementById(`${id}-result`).style.color = valid ? green : red;
+            }
+
+            function check(id, fn) {
+                try {
+                    const test = document.getElementById(`${id}-test`).value;
+                    if (filenames[id] && test != "valid") {
+                        const expected = test.replace(/^assignment-\d+-/, "") + ".txt";
+                        if (filenames[id] != expected)
+                            return report(id, false, `Your file should be named '${expected}'.`);
+                    }
+                    fn(test, document.getElementById(id).value);
+                    report(id, true, test == "valid" ? "" : `Note that this doesn't necessarily mean that your input is correct.`);
+                } catch (e) {
+                    report(id, false, e);
+                }
+            }
+
+            function checkDfa() {
+                check("check-dfa", check_dfa);
+            }
+
+            function checkNfa() {
+                check("check-nfa", check_nfa);
+            }
+
+            function checkRegex() {
+                check("check-regex", check_regex);
+            }
+
+            function checkGrammar() {
+                check("check-grammar", check_grammar);
+            }
+
+            run();
+        </script>
+    </main>
+</body>
+
+</html>

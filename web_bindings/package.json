@@ -1,0 +1,15 @@
+{
+  "name": "bindings",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "bindings_bg.wasm",
+    "bindings.js",
+    "bindings.d.ts"
+  ],
+  "main": "bindings.js",
+  "types": "bindings.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
