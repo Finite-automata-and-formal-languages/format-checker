@@ -130,6 +130,8 @@ N → 1 | 1 N</textarea>
             const green = "#388e3c";
             const red = "#b71c1c";
 
+            let filenames = {};
+
             async function run() {
                 await init();
                 document.querySelectorAll(".check-button").forEach(button => {
@@ -152,10 +154,10 @@ N → 1 | 1 N</textarea>
                 });
                 document.getElementById("check-grammar-btn").onclick = checkGrammar;
 
-                document.getElementById("check-dfa-upld").onchange = () => uploadFile("check-dfa-upld", "check-dfa");
-                document.getElementById("check-nfa-upld").onchange = () => uploadFile("check-nfa-upld", "check-nfa");
-                document.getElementById("check-regex-upld").onchange = () => uploadFile("check-regex-upld", "check-regex");
-                document.getElementById("check-grammar-upld").onchange = () => uploadFile("check-grammar-upld", "check-grammar");
+                for (const id of ["check-dfa", "check-nfa", "check-regex", "check-grammar"]) {
+                    document.getElementById(`${id}-upld`).onchange = () => uploadFile(`${id}-upld`, id);
+                    document.getElementById(id).onchange = () => delete filenames[id];
+                }
             }
 
             function uploadFile(input, textarea) {
@@ -163,6 +165,7 @@ N → 1 | 1 N</textarea>
                 const reader = new FileReader();
                 reader.readAsText(file, "UTF-8")
                 reader.onload = (e) => { document.getElementById(textarea).value = e.target.result };
+                filenames[textarea] = file.name;
             }
 
             function report(id, valid, output) {
@@ -175,8 +178,13 @@ N → 1 | 1 N</textarea>
             function check(id, fn) {
                 try {
                     const test = document.getElementById(`${id}-test`).value;
+                    if (filenames[id] && test != "valid") {
+                        const expected = test.replace(/^assignment-\d+-/, "") + ".txt";
+                        if (filenames[id] != expected)
+                            return report(id, false, `Your file should be named '${expected}'.`);
+                    }
                     fn(test, document.getElementById(id).value);
-                    report(id, true, test == "valid" ? "" : `Note that this doesn't necessarily mean that your input is correct.`); // TODO explain why
+                    report(id, true, test == "valid" ? "" : `Note that this doesn't necessarily mean that your input is correct.`);
                 } catch (e) {
                     report(id, false, e);
                 }
